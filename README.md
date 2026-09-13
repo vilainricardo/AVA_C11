@@ -70,43 +70,11 @@ Um novo frame da Unity não significa necessariamente que o núcleo de simulaç�
 
 ## 6. Modelo de execução
 
-```text
-              CICLO DA SIMULAÇÃO
+O modelo temporal foi separado do diagrama estrutural para evitar que os dois expressem a mesma informação.
 
-   comando / tick / evento interno
-                 │
-                 ▼
-        ┌─────────────────┐
-        │ Simulation Core │
-        └────────┬────────┘
-                 │
-          ┌──────┴──────┐
-          ▼             ▼
-    World State       Events
-          │             │
-          └──────┬──────┘
-                 │
-           estado/mudanças
-                 │
-                 ▼
-              Unity
-                 │
-                 ▼
-       Presentation / Render
+O **diagrama de arquitetura** mostra os contêineres e suas responsabilidades. O **modelo de execução** mostra como os ciclos funcionam ao longo do tempo.
 
-              CICLO DA UNITY
-
-   Input ─────► Commands
-                  │
-                  └────► Simulação
-
-   Frame ─────► Presentation ─────► Render
-                     ▲
-                     │
-              último estado
-```
-
-A figura deve ser entendida como **dois ciclos paralelos que trocam informações**, e não como uma pipeline única na qual o `Simulation Core` chama a `Presentation` a cada processamento.
+Ver: [`docs/diagrams/execution-model.md`](docs/diagrams/execution-model.md).
 
 ## 7. Sincronização
 
@@ -154,15 +122,23 @@ Para que uma implementação futura não precise inventar decisões importantes,
 
 ## 10. Diagramas
 
-### 10.1 Diagrama estrutural
+Os diagramas foram separados por finalidade, evitando repetir a mesma explicação em várias figuras.
 
-O diagrama estrutural mostra os dois ciclos independentes e as trocas de informação entre eles.
+### 10.1 Arquitetura / contêineres
+
+Responde: **quais são os principais blocos do sistema e como eles se relacionam?**
 
 Ver: [`docs/diagrams/architecture.md`](docs/diagrams/architecture.md).
 
-### 10.2 Jornada crítica
+### 10.2 Modelo de execução
 
-A jornada crítica mostra uma ação que realmente altera o mundo e, separadamente, o ciclo visual que representa o estado atualizado.
+Responde: **como os ciclos independentes de simulação e renderização funcionam ao longo do tempo?**
+
+Ver: [`docs/diagrams/execution-model.md`](docs/diagrams/execution-model.md).
+
+### 10.3 Jornada crítica
+
+Responde: **o que acontece quando uma ação do usuário provoca uma alteração no mundo?**
 
 Ver: [`docs/diagrams/critical-journey.md`](docs/diagrams/critical-journey.md).
 
@@ -215,6 +191,7 @@ AVA_C11/
     ├── traceability.md
     └── diagrams/
         ├── architecture.md
+        ├── execution-model.md
         └── critical-journey.md
 ```
 
