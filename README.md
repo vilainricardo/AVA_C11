@@ -1,88 +1,58 @@
 # AVA_C11
 
-Documentação arquitetural para a atividade da Unidade III.
+## Descrição
 
-> Este repositório é um artefato acadêmico autocontido. Ele apresenta um sistema fictício inspirado em princípios de arquitetura de software, sem expor código, assets, nomes internos ou decisões proprietárias de qualquer projeto privado.
+Este repositório apresenta a documentação arquitetural produzida para a atividade da Unidade III.
 
-## 1. Objetivo
+O sistema analisado representa, de forma simplificada, um jogo/simulador com um mundo persistente. A ideia central é separar o **núcleo de simulação** da **apresentação visual**.
 
-O objetivo é documentar uma arquitetura de software de forma clara, usando diagramas como código e uma jornada crítica do sistema.
+O `Simulation Core` é responsável pelas regras e pelo estado do mundo. A Unity fica responsável por entrada, apresentação e renderização. Os dois lados possuem ciclos independentes e trocam informações por meio de comandos, estado e eventos.
 
-O sistema de referência representa um jogo/simulador com mundo persistente. O núcleo de simulação é responsável pelas regras e pelo estado do mundo, enquanto a Unity mantém o ciclo de apresentação e renderização.
+## Diagramas
 
-## 2. Escopo
+Os diagramas foram escritos em Markdown com Mermaid e estão organizados por finalidade.
 
-### Incluído
+### Arquitetura / contêineres
 
-- núcleo de simulação independente da apresentação;
-- entidades e estado do mundo;
-- passagem de tempo por ticks lógicos;
-- entrada de ações como comandos;
-- saída de mudanças relevantes como eventos;
-- camada Unity de apresentação/renderização;
-- sincronização da apresentação com o estado mais recente;
-- preocupação explícita com desempenho e evolução incremental;
-- documentação arquitetural em Markdown e Mermaid.
+Mostra os principais blocos do sistema, suas responsabilidades e as relações entre a frente de simulação e a frente de apresentação.
 
-### Fora do escopo
+![Diagrama de arquitetura](docs/diagrams/architecture.md)
 
-- implementação de gameplay;
-- código-fonte de um jogo real;
-- assets gráficos, áudio ou modelos 3D;
-- persistência definitiva em banco de dados;
-- multiplayer;
-- escolha de infraestrutura de produção;
-- detalhes de implementação que ainda não foram decididos.
+Código-fonte: [`docs/diagrams/architecture.md`](docs/diagrams/architecture.md)
 
-## 3. Visão arquitetural
+### Modelo de execução
 
-A arquitetura separa **dois ciclos independentes**:
+Mostra que o ciclo de simulação e o ciclo de renderização são independentes. Um novo frame da Unity não significa automaticamente uma nova execução do `Simulation Core`.
 
-- **Simulação:** processa comandos, ticks e alterações internas do mundo. É a autoridade sobre o estado.
-- **Apresentação Unity:** captura entrada, consulta o estado mais recente e mantém o ciclo de renderização.
+![Modelo de execução](docs/diagrams/execution-model.md)
 
-A apresentação **não é uma etapa do processamento do Simulation Core**. Ela recebe/consulta informações produzidas pela simulação e decide como representá-las visualmente.
+Código-fonte: [`docs/diagrams/execution-model.md`](docs/diagrams/execution-model.md)
 
-Um novo frame da Unity não significa necessariamente que o núcleo de simulação deva executar novamente suas regras.
+### Jornada crítica
 
-## 4. Responsabilidades
+Mostra uma ação do usuário atravessando a fronteira entre apresentação e simulação, até que o resultado esteja disponível para ser representado visualmente.
 
-| Componente | Responsabilidade | Ciclo |
-|---|---|---|
-| Input | Capturar intenção do usuário e gerar solicitações. | Unity |
-| Presentation | Consumir estado/eventos e manter a representação visual. | Unity |
-| Command Layer | Representar solicitações de alteração do mundo. | Simulação |
-| Simulation Core | Aplicar regras e produzir novos estados/eventos. | Simulação |
-| World State | Manter a fonte de verdade do estado simulado. | Simulação |
-| Event Layer | Comunicar mudanças relevantes. | Simulação |
-| Renderização / UI | Desenhar a representação atual. | Unity |
+![Jornada crítica](docs/diagrams/critical-journey.md)
 
-## 5. Princípios arquiteturais
+Código-fonte: [`docs/diagrams/critical-journey.md`](docs/diagrams/critical-journey.md)
 
-1. **Simulation Core independente da apresentação** — as regras da simulação não dependem de APIs visuais.
-2. **Estado com fonte de verdade única** — o estado simulado pertence ao núcleo.
-3. **Comandos para entrada** — ações externas chegam ao núcleo como intenções explícitas.
-4. **Eventos para comunicação de mudanças** — acontecimentos relevantes podem sinalizar consumidores interessados.
-5. **Tempo lógico** — a evolução do mundo usa uma noção de tempo/tick da simulação, não simplesmente o frame rate.
-6. **Renderização independente** — a Unity pode renderizar usando o último estado conhecido sem executar novamente as regras do mundo em cada frame.
-7. **Baixo acoplamento** — os ciclos de simulação e apresentação se comunicam por contratos claros.
-8. **Evolução incremental** — otimizações complexas devem ser introduzidas quando houver evidência de necessidade.
+> **Observação:** os arquivos dos diagramas contêm o código Mermaid. A renderização visual pode ser visualizada pelo suporte de Mermaid do GitHub ou por um visualizador compatível.
 
-## 6. Ajustes realizados durante a elaboração
+## Decisões e ajustes realizados
 
-A primeira versão dos diagramas continha uma interpretação arquitetural que precisou ser corrigida durante a revisão.
+Durante a elaboração, o modelo gerou algumas estruturas que precisaram ser revistas. Esses ajustes fazem parte do resultado da atividade.
 
-### 6.1 Apresentação inicialmente colocada como parte do fluxo do Core
+### 1. Apresentação visual inicialmente colocada no fluxo do Core
 
-Na primeira representação, a `Presentation` aparecia visualmente como uma etapa depois do `Simulation Core`, em uma leitura semelhante a:
+Na primeira versão, a apresentação aparecia como uma etapa posterior ao `Simulation Core`, em uma leitura semelhante a:
 
 ```text
 Input → Command → Simulation Core → Estado/Eventos → Presentation → Renderização
 ```
 
-Embora esse fluxo possa representar uma **jornada de informação**, ele era inadequado como representação do funcionamento interno da arquitetura, porque sugeria que a apresentação fazia parte da sequência de processamento do núcleo.
+Essa representação não deixava clara a independência entre os ciclos e podia levar à interpretação de que o `Simulation Core` processava e depois chamava a apresentação como parte do mesmo fluxo.
 
-A correção foi separar explicitamente as duas frentes:
+O diagrama foi corrigido para representar duas frentes independentes:
 
 ```text
 FRENTE DE SIMULAÇÃO              FRENTE DE APRESENTAÇÃO
@@ -90,123 +60,48 @@ FRENTE DE SIMULAÇÃO              FRENTE DE APRESENTAÇÃO
 Command → Simulation Core       Input → Presentation → Renderização
              │                         ▲
              ├→ World State ───────────┤
-             └→ Eventos ────────────────┘
+             └→ Eventos ───────────────┘
 ```
 
-Assim, `Presentation` não é chamada pelo `Simulation Core` como uma etapa obrigatória. A simulação produz/expõe informações e a apresentação as consome conforme seu próprio ciclo.
+A apresentação consome informações produzidas pela simulação, mas não é uma etapa interna do processamento do Core.
 
-### 6.2 Separação entre estrutura e execução
+### 2. Redundância entre os diagramas
 
-Também foi identificado que dois diagramas estavam explicando praticamente a mesma coisa: o antigo **nível de contêineres** e o antigo diagrama de **separação entre simulação e renderização**.
+Também foi identificado que o nível de contêineres e o diagrama de separação entre simulação e renderização estavam explicando praticamente o mesmo conceito.
 
-Para evitar essa repetição, a documentação foi dividida por finalidade:
+A solução foi separar as responsabilidades:
 
-- `architecture.md` responde **quais são os principais blocos e suas responsabilidades**;
-- `execution-model.md` responde **como os ciclos independentes funcionam ao longo do tempo**;
-- `critical-journey.md` responde **o que acontece quando uma ação provoca uma alteração no mundo**.
+- **Architecture:** quais são os principais blocos e suas responsabilidades;
+- **Execution Model:** como os ciclos de simulação e renderização funcionam ao longo do tempo;
+- **Critical Journey:** o que acontece quando uma ação provoca uma alteração no mundo.
 
-Essa alteração não muda a arquitetura; ela melhora a precisão e evita que um mesmo conceito seja repetido em diagramas diferentes.
+Assim, cada diagrama responde a uma pergunta diferente.
 
-### 6.3 Correção do conceito de gatilho da simulação
+### 3. Correção do conceito de gatilho da simulação
 
-Durante a revisão, também foi refinada a afirmação de que o Core "só processa eventos". Essa formulação seria imprecisa, porque eventos também podem ser uma saída da simulação.
+A expressão inicial de que o Core "só processa eventos" foi considerada imprecisa. Eventos também podem ser uma saída produzida pelo próprio Core.
 
-O conceito adotado passou a ser:
+A formulação adotada passou a ser:
 
 > O `Simulation Core` processa quando existe um **gatilho válido da simulação**, como um comando, um evento interno agendado, um avanço do tick lógico ou outra alteração válida do mundo.
 
-Portanto, **frame da Unity não é automaticamente um gatilho do Core**.
+Portanto, um frame da Unity não é, por si só, um gatilho para executar novamente as regras do núcleo.
 
-## 7. Sincronização
+### 4. Complexidade maior que a necessária
 
-Quando não existe alteração relevante no mundo, a Unity pode continuar renderizando a partir do último estado conhecido. Isso evita associar artificialmente o processamento do domínio à taxa de FPS.
+Outro ajuste importante foi reconhecer que o sistema estava sendo descrito de forma mais complexa do que o exercício exigia.
 
-Quando o `Simulation Core` produz uma mudança, o novo estado e/ou um evento relevante pode sinalizar à apresentação que existe informação nova para representar.
+Como a arquitetura foi inicialmente construída tendo como referência os princípios de um projeto real, o modelo trouxe espontaneamente elementos comuns de documentação de projetos de software, como **RF (requisitos funcionais)**, **RNF (requisitos não funcionais)** e uma **matriz de rastreabilidade**.
 
-O mecanismo concreto de snapshot, versionamento, dirty state ou outra estratégia de sincronização ainda é uma decisão de implementação em aberto.
+Esses elementos foram inicialmente criados, embora de forma extremamente simplificada, mas **não faziam parte do que havia sido solicitado na atividade**. Por isso, foram removidos do repositório.
 
-## 8. Decisões e restrições conhecidas
+O mesmo princípio foi aplicado ao próprio README. Inicialmente, ele foi tratado como se precisasse conter todos os elementos normalmente encontrados em um README clássico de projeto. Isso também aumentou desnecessariamente o escopo da documentação.
 
-### Decisões
+Foi necessário restringir o README ao que o exercício efetivamente pede: **a descrição, os diagramas renderizados e as decisões/ajustes realizados sobre o que o modelo gerou**.
 
-- A apresentação visual é separada do núcleo de simulação.
-- O núcleo é tratado como a autoridade sobre o estado do mundo.
-- Comandos representam solicitações de mudança.
-- Eventos comunicam mudanças relevantes aos consumidores.
-- A arquitetura permite testes do núcleo sem exigir renderização.
-- A renderização possui ciclo próprio e não determina a frequência da simulação.
-- Performance deve ser tratada de forma incremental e orientada por medição.
+Esse ajuste é importante porque uma arquitetura adequada não é necessariamente a mais complexa; ela deve ser proporcional ao problema e ao objetivo da atividade.
 
-### Restrições
-
-- O documento não pressupõe uma implementação específica para todos os detalhes.
-- Não se deve introduzir tecnologia adicional apenas por preferência arquitetural.
-- A apresentação não deve conter a regra central da simulação.
-- Um frame de renderização não deve ser tratado como gatilho automático para reprocessar o mundo.
-
-## 9. Decisões ainda em aberto
-
-Ainda seria necessário definir em uma implementação futura:
-
-- formato concreto das entidades e componentes de estado;
-- catálogo de comandos e seus parâmetros;
-- catálogo de eventos;
-- política de frequência dos ticks;
-- estratégia de sincronização entre estado e apresentação;
-- estratégia de snapshot/versionamento;
-- estratégia de persistência;
-- tratamento de erros e comandos inválidos;
-- estratégia de serialização;
-- requisitos quantitativos de desempenho;
-- estratégia de paralelização, caso necessária;
-- contratos detalhados entre simulação e apresentação.
-
-## 10. Diagramas
-
-Os diagramas foram separados por finalidade, evitando repetir a mesma explicação em várias figuras.
-
-### 10.1 Arquitetura / contêineres
-
-Responde: **quais são os principais blocos do sistema e como eles se relacionam?**
-
-Ver: [`docs/diagrams/architecture.md`](docs/diagrams/architecture.md).
-
-### 10.2 Modelo de execução
-
-Responde: **como os ciclos independentes de simulação e renderização funcionam ao longo do tempo?**
-
-Ver: [`docs/diagrams/execution-model.md`](docs/diagrams/execution-model.md).
-
-### 10.3 Jornada crítica
-
-Responde: **o que acontece quando uma ação do usuário provoca uma alteração no mundo?**
-
-Ver: [`docs/diagrams/critical-journey.md`](docs/diagrams/critical-journey.md).
-
-## 11. O que foi inferido vs. o que foi definido
-
-### Inferido a partir dos princípios arquiteturais
-
-- a simulação deve ser isolável da camada visual;
-- a apresentação deve possuir ciclo independente;
-- comandos são uma fronteira adequada para entrada;
-- eventos são uma fronteira adequada para comunicar mudanças;
-- o tempo lógico deve ser tratado explicitamente;
-- a Unity não deve ser a autoridade temporal do domínio;
-- testes e benchmarks podem ser executados sem depender da renderização;
-- otimizações devem ser introduzidas conforme evidências.
-
-### Definido neste artefato
-
-- nomes dos blocos apresentados nos diagramas;
-- separação explícita dos ciclos de simulação e apresentação;
-- jornada crítica escolhida para a atividade;
-- escopo e limites documentados neste README;
-- itens que permanecem deliberadamente em aberto.
-
-Nenhuma decisão em aberto deve ser considerada automaticamente definida por este documento.
-
-## 12. Estrutura do repositório
+## Estrutura atual
 
 ```text
 AVA_C11/
@@ -219,8 +114,6 @@ AVA_C11/
         └── critical-journey.md
 ```
 
-## 13. Ferramentas
+## Fonte dos diagramas
 
-- Markdown para documentação;
-- Mermaid para diagramas como código;
-- Git/GitHub para versionamento.
+Os diagramas são mantidos como código em Mermaid dentro dos arquivos Markdown. Isso permite que as decisões arquiteturais permaneçam versionadas junto com sua representação visual.
