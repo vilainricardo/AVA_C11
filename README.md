@@ -6,7 +6,7 @@ Documentação arquitetural para a atividade da Unidade III.
 
 ## 1. Objetivo
 
-O objetivo é documentar uma arquitetura de software de forma suficientemente clara para apoiar análise, discussão e futura implementação, usando diagramas como código e uma jornada crítica do sistema.
+O objetivo é documentar uma arquitetura de software de forma clara, usando diagramas como código e uma jornada crítica do sistema.
 
 O sistema de referência representa um jogo/simulador com mundo persistente. O núcleo de simulação é responsável pelas regras e pelo estado do mundo, enquanto a Unity mantém o ciclo de apresentação e renderização.
 
@@ -43,7 +43,7 @@ A arquitetura separa **dois ciclos independentes**:
 
 A apresentação **não é uma etapa do processamento do Simulation Core**. Ela recebe/consulta informações produzidas pela simulação e decide como representá-las visualmente.
 
-Um novo frame da Unity não significa necessariamente que o núcleo de simulação deva executar novamente suas regras. Da mesma forma, uma mudança na simulação pode ocorrer sem que a renderização seja o mecanismo que a causou.
+Um novo frame da Unity não significa necessariamente que o núcleo de simulação deva executar novamente suas regras.
 
 ## 4. Responsabilidades
 
@@ -68,15 +68,7 @@ Um novo frame da Unity não significa necessariamente que o núcleo de simulaç�
 7. **Baixo acoplamento** — os ciclos de simulação e apresentação se comunicam por contratos claros.
 8. **Evolução incremental** — otimizações complexas devem ser introduzidas quando houver evidência de necessidade.
 
-## 6. Modelo de execução
-
-O modelo temporal foi separado do diagrama estrutural para evitar que os dois expressem a mesma informação.
-
-O **diagrama de arquitetura** mostra os contêineres e suas responsabilidades. O **modelo de execução** mostra como os ciclos funcionam ao longo do tempo.
-
-Ver: [`docs/diagrams/execution-model.md`](docs/diagrams/execution-model.md).
-
-## 7. Sincronização
+## 6. Sincronização
 
 Quando não existe alteração relevante no mundo, a Unity pode continuar renderizando a partir do último estado conhecido. Isso evita associar artificialmente o processamento do domínio à taxa de FPS.
 
@@ -84,7 +76,7 @@ Quando o `Simulation Core` produz uma mudança, o novo estado e/ou um evento rel
 
 O mecanismo concreto de snapshot, versionamento, dirty state ou outra estratégia de sincronização ainda é uma decisão de implementação em aberto.
 
-## 8. Decisões e restrições conhecidas
+## 7. Decisões e restrições conhecidas
 
 ### Decisões
 
@@ -103,9 +95,9 @@ O mecanismo concreto de snapshot, versionamento, dirty state ou outra estratégi
 - A apresentação não deve conter a regra central da simulação.
 - Um frame de renderização não deve ser tratado como gatilho automático para reprocessar o mundo.
 
-## 9. Decisões ainda em aberto
+## 8. Decisões ainda em aberto
 
-Para que uma implementação futura não precise inventar decisões importantes, ainda seria necessário definir:
+Ainda seria necessário definir em uma implementação futura:
 
 - formato concreto das entidades e componentes de estado;
 - catálogo de comandos e seus parâmetros;
@@ -120,29 +112,29 @@ Para que uma implementação futura não precise inventar decisões importantes,
 - estratégia de paralelização, caso necessária;
 - contratos detalhados entre simulação e apresentação.
 
-## 10. Diagramas
+## 9. Diagramas
 
 Os diagramas foram separados por finalidade, evitando repetir a mesma explicação em várias figuras.
 
-### 10.1 Arquitetura / contêineres
+### 9.1 Arquitetura / contêineres
 
 Responde: **quais são os principais blocos do sistema e como eles se relacionam?**
 
 Ver: [`docs/diagrams/architecture.md`](docs/diagrams/architecture.md).
 
-### 10.2 Modelo de execução
+### 9.2 Modelo de execução
 
 Responde: **como os ciclos independentes de simulação e renderização funcionam ao longo do tempo?**
 
 Ver: [`docs/diagrams/execution-model.md`](docs/diagrams/execution-model.md).
 
-### 10.3 Jornada crítica
+### 9.3 Jornada crítica
 
 Responde: **o que acontece quando uma ação do usuário provoca uma alteração no mundo?**
 
 Ver: [`docs/diagrams/critical-journey.md`](docs/diagrams/critical-journey.md).
 
-## 11. O que foi inferido vs. o que foi definido
+## 10. O que foi inferido vs. o que foi definido
 
 ### Inferido a partir dos princípios arquiteturais
 
@@ -165,53 +157,21 @@ Ver: [`docs/diagrams/critical-journey.md`](docs/diagrams/critical-journey.md).
 
 Nenhuma decisão em aberto deve ser considerada automaticamente definida por este documento.
 
-## 12. Como uma IA deve usar esta documentação
-
-Uma IA que receba este repositório deve:
-
-1. tratar o `Simulation Core` como autoridade do estado simulado;
-2. manter simulação e apresentação como ciclos independentes;
-3. representar ações externas como comandos;
-4. usar eventos para comunicar mudanças relevantes;
-5. evitar executar regras de domínio apenas porque ocorreu um novo frame;
-6. evitar criar detalhes de domínio que não estejam documentados;
-7. marcar explicitamente qualquer decisão nova necessária para implementação;
-8. preferir soluções simples antes de introduzir otimizações ou infraestrutura complexa;
-9. manter os diagramas atualizados quando uma decisão arquitetural for alterada.
-
-## 13. Estrutura do repositório
+## 11. Estrutura do repositório
 
 ```text
 AVA_C11/
 ├── README.md
 └── docs/
     ├── architecture-decisions.md
-    ├── implementation-guide.md
-    ├── requirements.md
-    ├── traceability.md
     └── diagrams/
         ├── architecture.md
         ├── execution-model.md
         └── critical-journey.md
 ```
 
-## 14. Ferramentas
+## 12. Ferramentas
 
 - Markdown para documentação;
 - Mermaid para diagramas como código;
-- Git/GitHub para versionamento e colaboração.
-
-## 15. Critério de qualidade
-
-A documentação é considerada adequada quando outra pessoa consegue compreender:
-
-- quais são os principais componentes;
-- qual responsabilidade pertence a cada componente;
-- quais são os ciclos independentes de simulação e apresentação;
-- como uma ação atravessa a fronteira entre os ciclos;
-- onde o estado é mantido;
-- quando a simulação precisa processar uma alteração;
-- como a apresentação obtém o estado mais recente;
-- quais decisões já foram tomadas;
-- quais decisões ainda precisam ser tomadas;
-- quais pontos não devem ser inventados durante uma implementação.
+- Git/GitHub para versionamento.
