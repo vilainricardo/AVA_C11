@@ -68,7 +68,56 @@ Um novo frame da Unity não significa necessariamente que o núcleo de simulaç�
 7. **Baixo acoplamento** — os ciclos de simulação e apresentação se comunicam por contratos claros.
 8. **Evolução incremental** — otimizações complexas devem ser introduzidas quando houver evidência de necessidade.
 
-## 6. Sincronização
+## 6. Ajustes realizados durante a elaboração
+
+A primeira versão dos diagramas continha uma interpretação arquitetural que precisou ser corrigida durante a revisão.
+
+### 6.1 Apresentação inicialmente colocada como parte do fluxo do Core
+
+Na primeira representação, a `Presentation` aparecia visualmente como uma etapa depois do `Simulation Core`, em uma leitura semelhante a:
+
+```text
+Input → Command → Simulation Core → Estado/Eventos → Presentation → Renderização
+```
+
+Embora esse fluxo possa representar uma **jornada de informação**, ele era inadequado como representação do funcionamento interno da arquitetura, porque sugeria que a apresentação fazia parte da sequência de processamento do núcleo.
+
+A correção foi separar explicitamente as duas frentes:
+
+```text
+FRENTE DE SIMULAÇÃO              FRENTE DE APRESENTAÇÃO
+
+Command → Simulation Core       Input → Presentation → Renderização
+             │                         ▲
+             ├→ World State ───────────┤
+             └→ Eventos ────────────────┘
+```
+
+Assim, `Presentation` não é chamada pelo `Simulation Core` como uma etapa obrigatória. A simulação produz/expõe informações e a apresentação as consome conforme seu próprio ciclo.
+
+### 6.2 Separação entre estrutura e execução
+
+Também foi identificado que dois diagramas estavam explicando praticamente a mesma coisa: o antigo **nível de contêineres** e o antigo diagrama de **separação entre simulação e renderização**.
+
+Para evitar essa repetição, a documentação foi dividida por finalidade:
+
+- `architecture.md` responde **quais são os principais blocos e suas responsabilidades**;
+- `execution-model.md` responde **como os ciclos independentes funcionam ao longo do tempo**;
+- `critical-journey.md` responde **o que acontece quando uma ação provoca uma alteração no mundo**.
+
+Essa alteração não muda a arquitetura; ela melhora a precisão e evita que um mesmo conceito seja repetido em diagramas diferentes.
+
+### 6.3 Correção do conceito de gatilho da simulação
+
+Durante a revisão, também foi refinada a afirmação de que o Core "só processa eventos". Essa formulação seria imprecisa, porque eventos também podem ser uma saída da simulação.
+
+O conceito adotado passou a ser:
+
+> O `Simulation Core` processa quando existe um **gatilho válido da simulação**, como um comando, um evento interno agendado, um avanço do tick lógico ou outra alteração válida do mundo.
+
+Portanto, **frame da Unity não é automaticamente um gatilho do Core**.
+
+## 7. Sincronização
 
 Quando não existe alteração relevante no mundo, a Unity pode continuar renderizando a partir do último estado conhecido. Isso evita associar artificialmente o processamento do domínio à taxa de FPS.
 
@@ -76,7 +125,7 @@ Quando o `Simulation Core` produz uma mudança, o novo estado e/ou um evento rel
 
 O mecanismo concreto de snapshot, versionamento, dirty state ou outra estratégia de sincronização ainda é uma decisão de implementação em aberto.
 
-## 7. Decisões e restrições conhecidas
+## 8. Decisões e restrições conhecidas
 
 ### Decisões
 
@@ -95,7 +144,7 @@ O mecanismo concreto de snapshot, versionamento, dirty state ou outra estratégi
 - A apresentação não deve conter a regra central da simulação.
 - Um frame de renderização não deve ser tratado como gatilho automático para reprocessar o mundo.
 
-## 8. Decisões ainda em aberto
+## 9. Decisões ainda em aberto
 
 Ainda seria necessário definir em uma implementação futura:
 
@@ -112,29 +161,29 @@ Ainda seria necessário definir em uma implementação futura:
 - estratégia de paralelização, caso necessária;
 - contratos detalhados entre simulação e apresentação.
 
-## 9. Diagramas
+## 10. Diagramas
 
 Os diagramas foram separados por finalidade, evitando repetir a mesma explicação em várias figuras.
 
-### 9.1 Arquitetura / contêineres
+### 10.1 Arquitetura / contêineres
 
 Responde: **quais são os principais blocos do sistema e como eles se relacionam?**
 
 Ver: [`docs/diagrams/architecture.md`](docs/diagrams/architecture.md).
 
-### 9.2 Modelo de execução
+### 10.2 Modelo de execução
 
 Responde: **como os ciclos independentes de simulação e renderização funcionam ao longo do tempo?**
 
 Ver: [`docs/diagrams/execution-model.md`](docs/diagrams/execution-model.md).
 
-### 9.3 Jornada crítica
+### 10.3 Jornada crítica
 
 Responde: **o que acontece quando uma ação do usuário provoca uma alteração no mundo?**
 
 Ver: [`docs/diagrams/critical-journey.md`](docs/diagrams/critical-journey.md).
 
-## 10. O que foi inferido vs. o que foi definido
+## 11. O que foi inferido vs. o que foi definido
 
 ### Inferido a partir dos princípios arquiteturais
 
@@ -157,7 +206,7 @@ Ver: [`docs/diagrams/critical-journey.md`](docs/diagrams/critical-journey.md).
 
 Nenhuma decisão em aberto deve ser considerada automaticamente definida por este documento.
 
-## 11. Estrutura do repositório
+## 12. Estrutura do repositório
 
 ```text
 AVA_C11/
@@ -170,7 +219,7 @@ AVA_C11/
         └── critical-journey.md
 ```
 
-## 12. Ferramentas
+## 13. Ferramentas
 
 - Markdown para documentação;
 - Mermaid para diagramas como código;
